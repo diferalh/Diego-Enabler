@@ -28,7 +28,7 @@ var _ = Describe("DiegoApps", func() {
 	})
 
 	JustBeforeEach(func() {
-		apps, err = command.DiegoApps(fakeApplicationsParser, fakePaginatedRequester)
+		apps, err = command.DiegoApps(fakeApplicationsParser, fakePaginatedRequester, nil)
 	})
 
 	It("should create a request with diego filter set to true", func() {

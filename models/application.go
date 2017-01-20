@@ -35,6 +35,8 @@ type ApplicationEntity struct {
 	//Instances            []GetApp_AppInstanceFields
 	//Routes               []GetApp_RouteSummary
 	//Services             []GetApp_ServiceSummary
+	NumberOfRoutes int
+	RoutesURL      string `json:"routes_url"`
 }
 
 type ApplicationsResponse struct {

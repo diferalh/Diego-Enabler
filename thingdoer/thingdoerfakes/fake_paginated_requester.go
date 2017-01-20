@@ -19,6 +19,14 @@ type FakePaginatedRequester struct {
 		result1 [][]byte
 		result2 error
 	}
+	HttpClientStub        func() api.CloudControllerClient
+	httpClientMutex       sync.RWMutex
+	httpClientArgsForCall []struct{}
+	httpClientReturns     struct {
+		result1 api.CloudControllerClient
+	}
+	invocations      map[string][][]interface{}
+	invocationsMutex sync.RWMutex
 }
 
 func (fake *FakePaginatedRequester) Do(filter api.Filter, params map[string]interface{}) ([][]byte, error) {
@@ -27,6 +35,7 @@ func (fake *FakePaginatedRequester) Do(filter api.Filter, params map[string]inte
 		filter api.Filter
 		params map[string]interface{}
 	}{filter, params})
+	fake.recordInvocation("Do", []interface{}{filter, params})
 	fake.doMutex.Unlock()
 	if fake.DoStub != nil {
 		return fake.DoStub(filter, params)
@@ -53,6 +62,53 @@ func (fake *FakePaginatedRequester) DoReturns(result1 [][]byte, result2 error) {
 		result1 [][]byte
 		result2 error
 	}{result1, result2}
+}
+
+func (fake *FakePaginatedRequester) HttpClient() api.CloudControllerClient {
+	fake.httpClientMutex.Lock()
+	fake.httpClientArgsForCall = append(fake.httpClientArgsForCall, struct{}{})
+	fake.recordInvocation("HttpClient", []interface{}{})
+	fake.httpClientMutex.Unlock()
+	if fake.HttpClientStub != nil {
+		return fake.HttpClientStub()
+	} else {
+		return fake.httpClientReturns.result1
+	}
+}
+
+func (fake *FakePaginatedRequester) HttpClientCallCount() int {
+	fake.httpClientMutex.RLock()
+	defer fake.httpClientMutex.RUnlock()
+	return len(fake.httpClientArgsForCall)
+}
+
+func (fake *FakePaginatedRequester) HttpClientReturns(result1 api.CloudControllerClient) {
+	fake.HttpClientStub = nil
+	fake.httpClientReturns = struct {
+		result1 api.CloudControllerClient
+	}{result1}
+}
+
+func (fake *FakePaginatedRequester) Invocations() map[string][][]interface{} {
+	fake.invocationsMutex.RLock()
+	defer fake.invocationsMutex.RUnlock()
+	fake.doMutex.RLock()
+	defer fake.doMutex.RUnlock()
+	fake.httpClientMutex.RLock()
+	defer fake.httpClientMutex.RUnlock()
+	return fake.invocations
+}
+
+func (fake *FakePaginatedRequester) recordInvocation(key string, args []interface{}) {
+	fake.invocationsMutex.Lock()
+	defer fake.invocationsMutex.Unlock()
+	if fake.invocations == nil {
+		fake.invocations = map[string][][]interface{}{}
+	}
+	if fake.invocations[key] == nil {
+		fake.invocations[key] = [][]interface{}{}
+	}
+	fake.invocations[key] = append(fake.invocations[key], args)
 }
 
 var _ thingdoer.PaginatedRequester = new(FakePaginatedRequester)

@@ -18,13 +18,21 @@ type FakeSpacesParser struct {
 		result1 models.Spaces
 		result2 error
 	}
+	invocations      map[string][][]interface{}
+	invocationsMutex sync.RWMutex
 }
 
 func (fake *FakeSpacesParser) Parse(arg1 []byte) (models.Spaces, error) {
+	var arg1Copy []byte
+	if arg1 != nil {
+		arg1Copy = make([]byte, len(arg1))
+		copy(arg1Copy, arg1)
+	}
 	fake.parseMutex.Lock()
 	fake.parseArgsForCall = append(fake.parseArgsForCall, struct {
 		arg1 []byte
-	}{arg1})
+	}{arg1Copy})
+	fake.recordInvocation("Parse", []interface{}{arg1Copy})
 	fake.parseMutex.Unlock()
 	if fake.ParseStub != nil {
 		return fake.ParseStub(arg1)
@@ -51,6 +59,26 @@ func (fake *FakeSpacesParser) ParseReturns(result1 models.Spaces, result2 error)
 		result1 models.Spaces
 		result2 error
 	}{result1, result2}
+}
+
+func (fake *FakeSpacesParser) Invocations() map[string][][]interface{} {
+	fake.invocationsMutex.RLock()
+	defer fake.invocationsMutex.RUnlock()
+	fake.parseMutex.RLock()
+	defer fake.parseMutex.RUnlock()
+	return fake.invocations
+}
+
+func (fake *FakeSpacesParser) recordInvocation(key string, args []interface{}) {
+	fake.invocationsMutex.Lock()
+	defer fake.invocationsMutex.Unlock()
+	if fake.invocations == nil {
+		fake.invocations = map[string][][]interface{}{}
+	}
+	if fake.invocations[key] == nil {
+		fake.invocations[key] = [][]interface{}{}
+	}
+	fake.invocations[key] = append(fake.invocations[key], args)
 }
 
 var _ thingdoer.SpacesParser = new(FakeSpacesParser)

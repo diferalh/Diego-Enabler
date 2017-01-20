@@ -2,8 +2,13 @@ package thingdoer_test
 
 import (
 	"errors"
+	"io/ioutil"
+	"net/http"
+	"net/url"
+	"strings"
 
 	"github.com/cloudfoundry-incubator/diego-enabler/api"
+	"github.com/cloudfoundry-incubator/diego-enabler/api/apifakes"
 	"github.com/cloudfoundry-incubator/diego-enabler/models"
 	"github.com/cloudfoundry-incubator/diego-enabler/thingdoer"
 	"github.com/cloudfoundry-incubator/diego-enabler/thingdoer/thingdoerfakes"
@@ -13,9 +18,10 @@ import (
 
 var _ = Describe("DeaApps", func() {
 	var (
-		fakePaginatedRequester *thingdoerfakes.FakePaginatedRequester
-		fakeApplicationsParser *thingdoerfakes.FakeApplicationsParser
-		apps                   models.Applications
+		fakePaginatedRequester    *thingdoerfakes.FakePaginatedRequester
+		fakeApplicationsParser    *thingdoerfakes.FakeApplicationsParser
+		fakeCloudControllerClient *apifakes.FakeCloudControllerClient
+		apps                      models.Applications
 
 		command thingdoer.AppsGetter
 		err     error
@@ -23,12 +29,17 @@ var _ = Describe("DeaApps", func() {
 
 	BeforeEach(func() {
 		fakePaginatedRequester = new(thingdoerfakes.FakePaginatedRequester)
+		fakeCloudControllerClient = new(apifakes.FakeCloudControllerClient)
+		fakePaginatedRequester.HttpClientReturns(fakeCloudControllerClient)
 		fakeApplicationsParser = new(thingdoerfakes.FakeApplicationsParser)
 		command = thingdoer.AppsGetter{}
 	})
 
 	JustBeforeEach(func() {
-		apps, err = command.DeaApps(fakeApplicationsParser, fakePaginatedRequester)
+		client := &api.Client{
+			BaseUrl: new(url.URL),
+		}
+		apps, err = command.DeaApps(fakeApplicationsParser, fakePaginatedRequester, client)
 	})
 
 	It("should create a request with diego filter set to false", func() {
@@ -143,13 +154,17 @@ var _ = Describe("DeaApps", func() {
 			BeforeEach(func() {
 				// for each call of Parse
 				fakeApplicationsParser.ParseReturns(parsedApps, nil)
+				fakeCloudControllerClient.DoStub = func(*http.Request) (*http.Response, error) {
+					return &http.Response{Body: ioutil.NopCloser(strings.NewReader(`{"total_results": 5}`))}, nil
+				}
 			})
 
 			It("returns a list of diego applications", func() {
 				expectedApps := models.Applications{
 					models.Application{
 						models.ApplicationEntity{
-							Diego: false,
+							Diego:          false,
+							NumberOfRoutes: 5,
 						},
 						models.ApplicationMetadata{
 							Guid: "some-guid",
@@ -157,7 +172,8 @@ var _ = Describe("DeaApps", func() {
 					},
 					models.Application{
 						models.ApplicationEntity{
-							Diego: false,
+							Diego:          false,
+							NumberOfRoutes: 5,
 						},
 						models.ApplicationMetadata{
 							Guid: "some-guid",
@@ -165,8 +181,11 @@ var _ = Describe("DeaApps", func() {
 					},
 				}
 
-				Expect(apps).To(Equal(expectedApps))
 				Expect(err).NotTo(HaveOccurred())
+				Expect(apps).To(Equal(expectedApps))
+			})
+
+			PContext("when getting routes for an application fails", func() {
 			})
 		})
 	})

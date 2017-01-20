@@ -35,6 +35,7 @@ func ListApps(cliConnection api.Connection, appsGetterFunc thingdoer.AppsGetterF
 	apps, err := appsGetterFunc(
 		appsParser,
 		appPaginatedRequester,
+		apiClient,
 	)
 	if err != nil {
 		return err

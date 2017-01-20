@@ -40,6 +40,10 @@ func NewPaginatedRequester(cliConnection Connection, requestFactory RequestFacto
 	}, nil
 }
 
+func (p *PaginatedRequester) HttpClient() CloudControllerClient {
+	return p.Client
+}
+
 func (p *PaginatedRequester) Do(filter Filter, params map[string]interface{}) ([][]byte, error) {
 	var noBodies [][]byte
 

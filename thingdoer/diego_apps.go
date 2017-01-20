@@ -5,7 +5,7 @@ import (
 	"github.com/cloudfoundry-incubator/diego-enabler/models"
 )
 
-type AppsGetterFunc func(ApplicationsParser, PaginatedRequester) (models.Applications, error)
+type AppsGetterFunc func(ApplicationsParser, PaginatedRequester, *api.Client) (models.Applications, error)
 
 //go:generate counterfeiter . ApplicationsParser
 type ApplicationsParser interface {
@@ -20,6 +20,7 @@ type AppsGetter struct {
 func (c AppsGetter) DiegoApps(
 	appsParser ApplicationsParser,
 	paginatedRequester PaginatedRequester,
+	client *api.Client,
 ) (models.Applications, error) {
 	var noApps models.Applications
 
